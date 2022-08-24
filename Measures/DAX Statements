@@ -1,0 +1,39 @@
+Adjusted Percentage = 'VW_Empanelment_Active'[Assigned Patients] / [Adjusted Target MRNs]		
+/* Calculates the percentage of patients at a hospital location that a particular doctor (PCP) is responsible for */
+
+Adjusted Target MRNs = [**Current FTE] * MIN('PCP FTE'[Clinical FTE])		
+/* Calculates the number of patients a PCP can care for based on their full time employment (fte) number */
+
+*AHS Totals = CALCULATE([Count of EPICMRN], LASTDATE(VW_Empanelment_Active[SnapShotDate]))		
+/* Calculates the total number of people in the AHS system */
+
+*Assigned Patients = CALCULATE(COUNT(VW_Empanelment_Active[PCP_PM_Assigned]),
+    LASTDATE(VW_Empanelment_Active[SnapShotDate]), VW_Empanelment_Active[PCP Role] <> "Unassigned", 
+    FILTER('PCP FTE','PCP FTE'[Clinical FTE]<>0 ))		
+/* Calculates the number of patients who have been processed into the AHS system and assigned to a PCP */
+
+*Unassigned Patients = CALCULATE([*AHS Totals] - [*Assigned Patients],LASTDATE(VW_Empanelment_Active[SnapShotDate]))		
+/* Calculates the number of patients processed into the AHS system but who have not been (and need to be) assigned to a PCP */
+
+*AHS NO PCP = CALCULATE(COUNT(VW_Empanelment_Active[PCP_PM_Assigned]),VW_Empanelment_Active[PCP_PM_Assigned] = "No, PCP",
+    LASTDATE(VW_Empanelment_Active[SnapShotDate]))		
+/* Calculates the number of AHS patients who are processed into the AHS system but designated as not needing an assigned PCP) */
+
+
+
+/* VARIATIONS OF ALL FIVE OF THE BELOW MEASURES ARE USED FOR EACH AHS LOCATION TO CALCULATE THE VARIOUS NUMBERS NEEDED */
+
+*Highland No PCP = CALCULATE(COUNT(VW_Empanelment_Active[PCP_PM_Assigned]),VW_Empanelment_Active[PCP Role] = "No, PCP-Adult_Highland")		
+/* Calculates the number of people at a specific hospital (highland) who are designated as not needing a PCP */
+
+Highland Adult Assigned = CALCULATE(COUNT(VW_Empanelment_Active[PCP_PM_Assigned]),VW_Empanelment_Active[Medical_Home_By_Visit] = "Adult_Highland")		
+/* Calculates the number of people at a specific hospital (highland) who are assigned to a specific PCP */
+
+Highland Adult Unassigned = [Highland Adult Total] - [Highland Adult Assigned]		
+/* Calculates the number of people at a specific hospital (highland) who are not yet (but need to be) assigned to a specific PCP */
+
+Highland Adult Percent = [Highland Adult Assigned] / [Highland Adult Total]		
+/* Calculates the number of people at a specific hospital (highland) who are assigned to a specific PCP  as a percentage */
+
+Highland Adult Total = CALCULATE(COUNT(VW_Empanelment_Active[EpicMRN]),VW_Empanelment_Active[Medical_Home_By_Visit] = "Adult_Highland")		
+/* Calculates the total number of people at a specific hospital (highland) who have been processed into their system */
